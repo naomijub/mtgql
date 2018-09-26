@@ -1,0 +1,7 @@
+[package]
+name = "mtgql"
+version = "0.1.0"
+authors = ["Julia Naomi <jnaomi@thoughtworks.com>"]
+
+[dependencies]
+hyper = "*"
