@@ -5,3 +5,8 @@ authors = ["Julia Naomi <jnaomi@thoughtworks.com>"]
 
 [dependencies]
 hyper = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+gqlog = "*"
+futures = "*"
