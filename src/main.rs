@@ -1,28 +1,56 @@
-#[macro_use] extern crate serde_derive;
-extern crate hyper;
 #[macro_use] extern crate serde_json;
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate juniper;
 extern crate serde;
+extern crate hyper;
+extern crate juniper_hyper;
 extern crate futures;
+extern crate futures_cpupool;
+extern crate pretty_env_logger;
 
 use std::fs::File;
 use std::io::prelude::*;
-
-use hyper::rt::Future;
-use hyper::{Request, Body, Response, Server};
-use hyper::service::{service_fn_ok};
-
+use futures::future;
+use futures_cpupool::CpuPool;
+use hyper::rt::{Future};
+use hyper::{Body, Method, Response, Server, StatusCode};
+use hyper::service::{service_fn};
+use juniper::{FieldResult, EmptyMutation};
+use juniper::RootNode;
+use std::sync::Arc;
 
 fn main() {
+    pretty_env_logger::init();
+    let pool = CpuPool::new(4);
     let addr = ([127, 0, 0, 1], 3000).into();
 
-    let ping_svc = move || {
-        service_fn_ok(fake_json)
+    let root_node = Arc::new(RootNode::new(Arc::new(Query), EmptyMutation::<Card>::new()));
+
+    let service = move || {
+        let root_node = root_node.clone();
+        let pool = pool.clone();
+        let ctx = Arc::new(fake_ctx());
+        service_fn(move |req| -> Box<Future<Item = _, Error = _> + Send> {
+            let root_node = root_node.clone();
+            let ctx = ctx.clone();
+            let pool = pool.clone();
+            match (req.method(), req.uri().path()) {
+                (&Method::GET, "/") => Box::new(juniper_hyper::graphiql("/graphql")),
+                (&Method::GET, "/graphql") => Box::new(juniper_hyper::graphql(pool, root_node, ctx, req)),
+                (&Method::POST, "/graphql") => {
+                    Box::new(juniper_hyper::graphql(pool, root_node, ctx, req))
+                }
+                _ => {
+                    let mut response = Response::new(Body::empty());
+                    *response.status_mut() = StatusCode::NOT_FOUND;
+                    Box::new(future::ok(response))
+                }
+            }
+        })
     };
 
-
-
     let server = Server::bind(&addr)
-        .serve(ping_svc)
+        .serve(service)
         .map_err(|e| eprintln!("server error: {}", e));
 
     hyper::rt::run(server);
@@ -35,29 +63,41 @@ fn read_fake() -> std::io::Result<String> {
     Ok(contents)
 }
 
-fn fake_json(_req: Request<Body>) -> Response<Body> {
+fn fake_ctx() -> Card {
     let v: Card = serde_json::from_str(read_fake().unwrap().as_str()).unwrap();
 
-    Response::new(Body::from(json!(v.clone()).to_string()))
+    v
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Query;
+
+graphql_object!(Query: Card |&self| {
+    field allCards(&executor) -> FieldResult<Vec<CardBody>> {
+        Ok(executor.context().cards.to_owned())
+    }
+});
+
+
+#[derive(Serialize, Deserialize, Debug, Clone, GraphQLObject)]
+#[graphql(description="Cards Vector")]
 struct Card {
     cards: Vec<CardBody>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, GraphQLObject)]
+#[graphql(description="Card Fields")]
+#[allow(non_snake_case)]
 struct CardBody {
     name: String,
-    mana_cost: Option<String>,
+    manaCost: Option<String>,
     cmc: i32,
     colors: Vec<String>,
-    color_identity: Option<Vec<String>>,
+    colorIdentity: Option<Vec<String>>,
     types: Vec<String>,
     subtypes: Option<Vec<String>>,
     rarity: String,
     set: String,
-    set_name: Option<String>,
+    setName: Option<String>,
     text: String,
     artist: String,
     number: String,
@@ -65,15 +105,16 @@ struct CardBody {
     toughness: Option<String>,
     layout: String,
     multiverseid: i32,
-    image_url: Option<String>,
+    imageUrl: Option<String>,
     rulings: Option<Vec<Rulings>>,
     printings: Vec<String>,
-    original_text: Option<String>,
-    original_type: Option<String>,
+    originalText: Option<String>,
+    originalType: Option<String>,
     id: String
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, GraphQLObject)]
+#[graphql(description="Card Rulings")]
 struct Rulings {
     date: String,
     text: String,

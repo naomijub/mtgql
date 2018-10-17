@@ -5,10 +5,11 @@ My Rust Graphql Api based on Magic The Gathering cards and possibly other game c
 ## Roadmap
 [x] - Create Rust Server
 [x] - Makes Hyper server serve Magic Cards Json
-[] - Create GraphQL Query
+[x] - Create GraphQL Query
+[] - Expend GQL Queries
+[] - refactor
 [] - DEVOPS
 [] - Consume JSON Data
-[] - Expend GQL Queries
 [] - Deploy?
 
 ## Techstack
