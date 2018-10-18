@@ -22,3 +22,6 @@ My Rust Graphql Api based on Magic The Gathering cards and possibly other game c
 4. Server dependencies:
   * Hyper
   * Serde
+  * Juniper
+  * Futures
+  * Rayon
