@@ -8,9 +8,30 @@ graphql_object!(Query: Card |&self| {
         Ok(executor.context().cards.to_owned())
     }
 
-    field card_by_name(&executor, name: String) -> FieldResult<Vec<CardBody>> {
+    field cards_by_name(&executor, name: String) -> FieldResult<Vec<CardBody>> {
         let cards = executor.context().cards.clone();
-        Ok(cards.into_par_iter().filter(|card| card.name.contains(name.as_str())).collect::<Vec<CardBody>>())
+        Ok(cards.into_par_iter()
+                .filter(|card| card.name.contains(name.as_str()))
+                .collect::<Vec<CardBody>>())
+    }
+
+    field mana_type_cards(&executor, color: Option<String>, colors: Option<Vec<String>>)
+                        -> FieldResult<Vec<CardBody>> {
+        let cards = executor.context().cards.clone();
+        match color {
+            Some(c) => Ok(cards.into_par_iter()
+                            .filter(|card| card.colors.contains(&c.to_owned()))
+                            .collect::<Vec<CardBody>>()),
+            None => match colors {
+                Some(cs) => Ok(cards.into_par_iter()
+                                .filter(|card|
+                                    cs.iter().fold(true, |value, x| value
+                                        && card.colors.contains(&x.to_owned())))
+                                .collect::<Vec<CardBody>>()),
+                None => Ok(vec![]),
+            }
+
+        }
     }
 });
 
