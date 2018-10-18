@@ -6,3 +6,4 @@ extern crate rayon;
 
 pub mod client;
 pub mod schema;
+pub mod gqlerror;

@@ -11,6 +11,7 @@ extern crate rayon;
 
 mod client;
 mod schema;
+mod gqlerror;
 
 use futures::future;
 use futures_cpupool::CpuPool;

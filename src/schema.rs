@@ -1,5 +1,6 @@
 use juniper::{FieldResult};
 use rayon::prelude::*;
+use super::gqlerror::{InputError};
 
 pub struct Query;
 const RARITY: [&str; 3] = ["Common",
@@ -24,9 +25,10 @@ graphql_object!(Query: Card |&self| {
                 .collect::<Vec<CardBody>>())
     }
 
-    field cards_by_rarity(&executor, rarity: String) -> FieldResult<Vec<CardBody>> {
+    field cards_by_rarity(&executor, rarity: String)
+        -> Result<Vec<CardBody>, InputError> {
         if !RARITY.contains(&rarity.as_str()) {
-            return Ok(vec![]);
+            return Err(InputError::RarityValidationError);
         }
 
         let cards = executor.context().cards.clone();
@@ -36,9 +38,9 @@ graphql_object!(Query: Card |&self| {
     }
 
     field mana_type_cards(&executor, color: Option<String>, colors: Option<Vec<String>>)
-                        -> FieldResult<Vec<CardBody>> {
+                        -> Result<Vec<CardBody>, InputError> {
         if !COLORS.contains(&color.clone().unwrap_or(String::from("WRONG")).as_str()) {
-            return Ok(vec![]);
+            return Err(InputError::ColorValidationError);
         }
         let cards = executor.context().cards.clone();
         if let Some(c) = color {
