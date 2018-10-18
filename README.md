@@ -7,7 +7,7 @@ My Rust Graphql Api based on Magic The Gathering cards and possibly other game c
 - [x] - Makes Hyper server serve Magic Cards Json
 - [x] - Create GraphQL Query
 - [] - Expend GQL Queries
-- [] - refactor [Modules](https://stackoverflow.com/questions/26388861/how-to-include-module-from-another-file-from-the-same-project)
+- [] - refactor
 - [] - DEVOPS
 - [] - Consume JSON Data
 - [] - Deploy?

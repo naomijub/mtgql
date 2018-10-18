@@ -1,6 +1,6 @@
-#[macro_use] extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate juniper;
+extern crate serde_json;
 extern crate serde;
 extern crate hyper;
 extern crate juniper_hyper;
