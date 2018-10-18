@@ -2,6 +2,15 @@ use juniper::{FieldResult};
 use rayon::prelude::*;
 
 pub struct Query;
+const RARITY: [&str; 3] = ["Common",
+                            "Uncommon",
+                            "Rare"];
+
+const COLORS: [&str; 5] = ["White",
+                            "Red",
+                            "Black",
+                            "Green",
+                            "Blue"];
 
 graphql_object!(Query: Card |&self| {
     field all_cards(&executor) -> FieldResult<Vec<CardBody>> {
@@ -15,8 +24,22 @@ graphql_object!(Query: Card |&self| {
                 .collect::<Vec<CardBody>>())
     }
 
+    field cards_by_rarity(&executor, rarity: String) -> FieldResult<Vec<CardBody>> {
+        if !RARITY.contains(&rarity.as_str()) {
+            return Ok(vec![]);
+        }
+
+        let cards = executor.context().cards.clone();
+        Ok(cards.into_par_iter()
+                .filter(|card| card.rarity == rarity)
+                .collect::<Vec<CardBody>>())
+    }
+
     field mana_type_cards(&executor, color: Option<String>, colors: Option<Vec<String>>)
                         -> FieldResult<Vec<CardBody>> {
+        if !COLORS.contains(&color.clone().unwrap_or(String::from("WRONG")).as_str()) {
+            return Ok(vec![]);
+        }
         let cards = executor.context().cards.clone();
         if let Some(c) = color {
             Ok(cards.into_par_iter()
@@ -31,20 +54,6 @@ graphql_object!(Query: Card |&self| {
         } else {
             Ok(vec![])
         }
-        // match color {
-        //     Some(c) => Ok(cards.into_par_iter()
-        //                     .filter(|card| card.colors.contains(&c.to_owned()))
-        //                     .collect::<Vec<CardBody>>()),
-        //     None => match colors {
-        //         Some(cs) => Ok(cards.into_par_iter()
-        //                         .filter(|card|
-        //                             cs.iter().fold(true, |value, x| value
-        //                                 && card.colors.contains(&x.to_owned())))
-        //                         .collect::<Vec<CardBody>>()),
-        //         None => Ok(vec![]),
-        //     }
-        //
-        // }
     }
 });
 
