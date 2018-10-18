@@ -18,20 +18,33 @@ graphql_object!(Query: Card |&self| {
     field mana_type_cards(&executor, color: Option<String>, colors: Option<Vec<String>>)
                         -> FieldResult<Vec<CardBody>> {
         let cards = executor.context().cards.clone();
-        match color {
-            Some(c) => Ok(cards.into_par_iter()
-                            .filter(|card| card.colors.contains(&c.to_owned()))
-                            .collect::<Vec<CardBody>>()),
-            None => match colors {
-                Some(cs) => Ok(cards.into_par_iter()
-                                .filter(|card|
-                                    cs.iter().fold(true, |value, x| value
-                                        && card.colors.contains(&x.to_owned())))
-                                .collect::<Vec<CardBody>>()),
-                None => Ok(vec![]),
-            }
-
+        if let Some(c) = color {
+            Ok(cards.into_par_iter()
+                    .filter(|card| card.colors.contains(&c.to_owned()))
+                    .collect::<Vec<CardBody>>())
+        } else if let Some(cs) = colors {
+            Ok(cards.into_par_iter()
+                    .filter(|card|
+                        cs.iter().fold(true, |value, x| value
+                            && card.colors.contains(&x.to_owned())))
+                    .collect::<Vec<CardBody>>())
+        } else {
+            Ok(vec![])
         }
+        // match color {
+        //     Some(c) => Ok(cards.into_par_iter()
+        //                     .filter(|card| card.colors.contains(&c.to_owned()))
+        //                     .collect::<Vec<CardBody>>()),
+        //     None => match colors {
+        //         Some(cs) => Ok(cards.into_par_iter()
+        //                         .filter(|card|
+        //                             cs.iter().fold(true, |value, x| value
+        //                                 && card.colors.contains(&x.to_owned())))
+        //                         .collect::<Vec<CardBody>>()),
+        //         None => Ok(vec![]),
+        //     }
+        //
+        // }
     }
 });
 
