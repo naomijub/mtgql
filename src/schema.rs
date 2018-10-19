@@ -58,16 +58,24 @@ graphql_object!(Query: Card |&self| {
         }
     }
 
-    field cards_by_power_and_toughness(&executor, min_power: i32, min_toughness: i32)
+    field cards_by_power_and_toughness(&executor, min_power: i32, min_toughness: i32, , max_mana_cost: Option<i32>)
         -> Result<Vec<CardBody>, InputError> {
-        let cards = executor.context().cards.clone();
-        Ok(cards.into_par_iter()
+        let cards = executor.context().cards.clone()
+            .into_par_iter()
             .filter(|card| {
                 let inner_power = card.power.clone();
                 let inner_tough = card.toughness.clone();
                 inner_power.unwrap_or("-1".to_string()).parse::<i32>().unwrap_or(-1) >= min_power
                 && inner_tough.unwrap_or("-1".to_string()).parse::<i32>().unwrap_or(-1) >= min_toughness})
-            .collect::<Vec<CardBody>>())
+            .collect::<Vec<CardBody>>();
+
+        if let Some(cmc) = max_mana_cost {
+            Ok(cards.into_par_iter()
+                    .filter(|card| card.cmc <= max_mana_cost.unwrap())
+                    .collect::<Vec<CardBody>>())
+        } else {
+            Ok(cards)
+        }
     }
 });
 
