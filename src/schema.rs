@@ -57,6 +57,18 @@ graphql_object!(Query: Card |&self| {
             Ok(vec![])
         }
     }
+
+    field cards_by_power_and_toughness(&executor, min_power: i32, min_toughness: i32)
+        -> Result<Vec<CardBody>, InputError> {
+        let cards = executor.context().cards.clone();
+        Ok(cards.into_par_iter()
+            .filter(|card| {
+                let inner_power = card.power.clone();
+                let inner_tough = card.toughness.clone();
+                inner_power.unwrap_or("-1".to_string()).parse::<i32>().unwrap_or(-1) >= min_power
+                && inner_tough.unwrap_or("-1".to_string()).parse::<i32>().unwrap_or(-1) >= min_toughness})
+            .collect::<Vec<CardBody>>())
+    }
 });
 
 #[derive(Serialize, Deserialize, Debug, Clone, GraphQLObject)]
@@ -65,7 +77,7 @@ pub struct Card {
     pub cards: Vec<CardBody>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, GraphQLObject)]
+#[derive(Serialize, Deserialize, Debug,  Clone, GraphQLObject)]
 #[graphql(description="Card Fields")]
 #[allow(non_snake_case)]
 pub struct CardBody {
