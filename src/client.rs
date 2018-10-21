@@ -5,9 +5,8 @@ use serde_json::from_str;
 use super::schema::Card;
 
 fn read_fake() -> Result<String> {
-    let mut file = File::open("./body.json")?;
     let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+    File::open("./body.json")?.read_to_string(&mut contents)?;
     Ok(contents)
 }
 
