@@ -58,7 +58,7 @@ graphql_object!(Query: Card |&self| {
         }
     }
 
-    field cards_by_power_and_toughness(&executor, min_power: i32, min_toughness: i32, , max_mana_cost: Option<i32>)
+    field cards_by_power_and_toughness(&executor, min_power: i32, min_toughness: i32, max_mana_cost: Option<i32>)
         -> Result<Vec<CardBody>, InputError> {
         let cards = executor.context().cards.clone()
             .into_par_iter()
